@@ -5,48 +5,36 @@ import com.example.studentmanager.repository.StudentRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class StudentService {
 
-    private final StudentRepository studentRepository;
+    private final StudentRepository repository;
 
-    public StudentService(StudentRepository studentRepository) {
-        this.studentRepository = studentRepository;
+    public StudentService(StudentRepository repository) {
+        this.repository = repository;
     }
 
-    public List<Student> getAllStudents() {
-        return studentRepository.findAll();
+    public List<Student> findAll() {
+        return repository.findAll();
     }
 
-    public Student getStudentById(Long id) {
-        return studentRepository.findById(id)
-                .orElseThrow(() -> new StudentNotFoundException(id));
+    public Optional<Student> findById(Long id) {
+        return repository.findById(id);
     }
 
-    public Student createStudent(Student student) {
-        return studentRepository.save(student);
+    public Student save(Student student) {
+        return repository.save(student);
     }
 
-    public Student updateStudent(Long id, Student studentDetails) {
-        Student student = getStudentById(id);
-        student.setFullName(studentDetails.getFullName());
-        student.setEmail(studentDetails.getEmail());
-        student.setPhone(studentDetails.getPhone());
-        student.setCourse(studentDetails.getCourse());
-        student.setAge(studentDetails.getAge());
-        return studentRepository.save(student);
+    public void deleteById(Long id) {
+        repository.deleteById(id);
     }
 
-    public void deleteStudent(Long id) {
-        Student student = getStudentById(id);
-        studentRepository.delete(student);
-    }
-
-    public static class StudentNotFoundException extends RuntimeException {
-
-        public StudentNotFoundException(Long id) {
-            super("Student not found with id: " + id);
-        }
+    public boolean emailExists(String email, Long excludeId) {
+        return excludeId == null
+                ? repository.existsByEmail(email)
+                : repository.existsByEmailAndIdNot(email, excludeId);
     }
 }

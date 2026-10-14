@@ -2,61 +2,96 @@ package com.example.studentmanager.controller;
 
 import com.example.studentmanager.model.Student;
 import com.example.studentmanager.service.StudentService;
-import com.example.studentmanager.service.StudentService.StudentNotFoundException;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
+import java.util.Optional;
 
-@RestController
-@RequestMapping("/api/students")
+@Controller
 public class StudentController {
 
-    private final StudentService studentService;
+    private static final List<String> COURSES = List.of(
+            "Computer Science", "Software Engineering", "Data Science",
+            "Statistics", "Information Systems");
 
-    public StudentController(StudentService studentService) {
-        this.studentService = studentService;
+    private final StudentService service;
+
+    public StudentController(StudentService service) {
+        this.service = service;
     }
 
-    @GetMapping
-    public List<Student> getAllStudents() {
-        return studentService.getAllStudents();
+    @ModelAttribute("courses")
+    public List<String> courses() {
+        return COURSES;
     }
 
-    @GetMapping("/{id}")
-    public Student getStudentById(@PathVariable Long id) {
-        return studentService.getStudentById(id);
+    @GetMapping("/")
+    public String home() {
+        return "redirect:/students";
     }
 
-    @PostMapping
-    public ResponseEntity<Student> createStudent(@Valid @RequestBody Student student) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(studentService.createStudent(student));
+    @GetMapping("/students")
+    public String list(Model model) {
+        model.addAttribute("student", new Student());
+        model.addAttribute("students", service.findAll());
+        return "students";
     }
 
-    @PutMapping("/{id}")
-    public Student updateStudent(@PathVariable Long id, @Valid @RequestBody Student student) {
-        return studentService.updateStudent(id, student);
+    @PostMapping("/students")
+    public String create(@Valid @ModelAttribute("student") Student student,
+                         BindingResult result, Model model,
+                         RedirectAttributes redirect) {
+        if (service.emailExists(student.getEmail(), null)) {
+            result.rejectValue("email", "duplicate", "This email is already registered");
+        }
+        if (result.hasErrors()) {
+            model.addAttribute("students", service.findAll());
+            return "students";
+        }
+
+        service.save(student);
+        redirect.addFlashAttribute("success", "Student added successfully.");
+        return "redirect:/students";
     }
 
-    @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteStudent(@PathVariable Long id) {
-        studentService.deleteStudent(id);
+    @GetMapping("/students/{id}/edit")
+    public String editForm(@PathVariable Long id, Model model,
+                           RedirectAttributes redirect) {
+        Optional<Student> student = service.findById(id);
+        if (student.isEmpty()) {
+            redirect.addFlashAttribute("error", "Student not found.");
+            return "redirect:/students";
+        }
+        model.addAttribute("student", student.get());
+        return "edit-student";
     }
 
-    @ExceptionHandler(StudentNotFoundException.class)
-    public ResponseEntity<String> handleStudentNotFound(StudentNotFoundException exception) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exception.getMessage());
+    @PostMapping("/students/{id}/update")
+    public String update(@PathVariable Long id,
+                         @Valid @ModelAttribute("student") Student student,
+                         BindingResult result, RedirectAttributes redirect) {
+        student.setId(id);
+        if (service.emailExists(student.getEmail(), id)) {
+            result.rejectValue("email", "duplicate", "This email is already registered");
+        }
+        if (result.hasErrors()) {
+            return "edit-student";
+        }
+
+        if (service.findById(id).isEmpty()) {
+            redirect.addFlashAttribute("error", "Student not found.");
+            return "redirect:/students";
+        }
+        service.save(student);
+        redirect.addFlashAttribute("success", "Student updated successfully.");
+        return "redirect:/students";
     }
 }
