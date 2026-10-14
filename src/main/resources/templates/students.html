@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Registration System</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+  <main class="container">
+    <header class="page-header">
+      <h1>Student Registration System</h1>
+      <p>Spring Boot · Thymeleaf · H2 Database</p>
+    </header>
+
+    <section class="card">
+      <h2>Register a Student</h2>
+      <form th:action="@{/students}" th:object="${student}" method="post">
+        <div th:replace="~{fragments :: fields}"></div>
+        <button type="submit">Save Student</button>
+      </form>
+    </section>
+
+    <div class="message success" th:if="${success}" th:text="${success}"></div>
+    <div class="message error" th:if="${error}" th:text="${error}"></div>
+
+    <section class="card">
+      <h2>
+        Registered Students
+        <span th:text="${#lists.size(students)}">0</span>
+      </h2>
+
+      <table th:if="${not #lists.isEmpty(students)}">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Full Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Course</th>
+            <th>Age</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr th:each="s : ${students}">
+            <td th:text="${s.id}"></td>
+            <td th:text="${s.fullName}"></td>
+            <td th:text="${s.email}"></td>
+            <td th:text="${s.phone}"></td>
+            <td th:text="${s.course}"></td>
+            <td th:text="${s.age}"></td>
+            <td class="actions">
+              <a th:href="@{/students/{id}/edit(id=${s.id})}">Edit</a>
+              <form th:action="@{/students/{id}/delete(id=${s.id})}" method="post">
+                <button type="submit"
+                        onclick="return confirm('Delete this student?')">Delete</button>
+              </form>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p class="empty-state" th:if="${#lists.isEmpty(students)}">
+        No students registered yet.
+      </p>
+    </section>
+
+    <footer>
+      COSC 32133 / BECS 32263 · Lab Sheet 04
+    </footer>
+  </main>
+</body>
+</html>

@@ -94,4 +94,16 @@ public class StudentController {
         redirect.addFlashAttribute("success", "Student updated successfully.");
         return "redirect:/students";
     }
+
+    @PostMapping("/students/{id}/delete")
+    public String delete(@PathVariable Long id, RedirectAttributes redirect) {
+        if (service.findById(id).isEmpty()) {
+            redirect.addFlashAttribute("error", "Student not found.");
+            return "redirect:/students";
+        }
+
+        service.deleteById(id);
+        redirect.addFlashAttribute("success", "Student deleted successfully.");
+        return "redirect:/students";
+    }
 }

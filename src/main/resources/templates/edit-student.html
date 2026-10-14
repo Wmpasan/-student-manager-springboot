@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Student</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+  <main class="container">
+    <header class="page-header">
+      <h1>Student Registration System</h1>
+      <p>Edit student details</p>
+    </header>
+
+    <section class="card">
+      <h2>
+        Edit Student
+        <span th:text="${student.id}">#</span>
+      </h2>
+
+      <form th:action="@{/students/{id}/update(id=${student.id})}"
+            th:object="${student}" method="post">
+        <div th:replace="~{fragments :: fields}"></div>
+        <div class="form-actions">
+          <button type="submit">Update Student</button>
+          <a class="button secondary" th:href="@{/students}">Cancel</a>
+        </div>
+      </form>
+    </section>
+
+    <footer>
+      COSC 32133 / BECS 32263 · Lab Sheet 04
+    </footer>
+  </main>
+</body>
+</html>
